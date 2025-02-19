@@ -36,73 +36,6 @@ class Task:
     def __str__(self):
         return json.dumps({"ID": self.idT, "Título": self.titulo, "Descrição": self.descricao, "Status": self.status, "Usuário": self.usuario})
 
-def separarMenu():
-    print("\n" * 10)
-
-def menu():
-    while True:
-        print("-----------------------------")
-        print("| 1 - Gerenciar usuários    |")
-        print("| 2 - Gerenciar tarefas     |")
-        print("| 3 - Sair                  |")
-        print("-----------------------------")
-        try:
-            opcao = int(input("Digite a opção desejada: "))
-            if opcao == 1:
-                separarMenu()
-                menu_usuarios()
-            elif opcao == 2:
-                separarMenu()
-                menu_tarefas()
-            elif opcao == 3:
-                print("Saindo do sistema, até a próxima!")
-                exit()
-            else:
-                print("Opção inválida, tente novamente.")
-        except ValueError:
-            print("Digite um valor válido!")
-
-def menu_usuarios():
-    while True:
-        print("-----------------------------------")
-        print("| 1 - Cadastrar usuário           |")
-        print("| 2 - Listar usuários cadastrados |")
-        print("| 3 - Voltar                      |")
-        print("-----------------------------------")
-        try:
-            opcao = int(input("Digite a opção desejada: "))
-            if opcao == 1:
-                addUsers()
-            elif opcao == 2:
-                viewUsers()
-            elif opcao == 3:
-                return
-            else:
-                print("Opção inválida, tente novamente.")
-        except ValueError:
-            print("Digite um valor válido!")
-            
-
-def menu_tarefas():
-    while True:
-        print("--------------------------------------------")
-        print("| 1 - Cadastrar tarefa                     |")
-        print("| 2 - Listar todas as tarefas cadastradas  |")
-        print("| 3 - Voltar                               |")
-        print("--------------------------------------------")
-        try:
-            opcao = int(input("Digite a opção desejada: "))
-            if opcao == 1:
-                addTask()
-            elif opcao == 2:
-                viewTask()
-            elif opcao == 3:
-                return
-            else:
-                print("Opção inválida, tente novamente.")
-        except ValueError:
-            print("Digite um valor válido!")
-
 def addUsers():
     try:
         nome = input("Digite o nome do usuário: ")
@@ -120,18 +53,14 @@ def addUsers():
     except FileNotFoundError:
         print("Arquivo de usuários não encontrado.")
         usuariosRetirados = []
-    except json.JSONDecodeError:
-        print("Erro no Arquivo.")
-        usuariosRetirados = []
 
     usuariosRetirados.append({
         "ID": novoIDC, 
         "Nome": nome, 
         "Email": email
     })
-    arq = open("users.json", "w")
-    json.dump(usuariosRetirados, arq)
-    arq.close()
+    with open("users.json", "w") as arq:
+        json.dump(usuariosRetirados, arq, indent=4)
   
 
 def viewUsers():
@@ -139,22 +68,20 @@ def viewUsers():
         arq = open("users.json", "r")
         print("Esses são os usuários cadastrados: \n")
         usuariosRetirados = json.load(arq)
-        print(usuariosRetirados)
-        arq.close()
+        print(json.dumps(usuariosRetirados, indent=4))
     except FileNotFoundError:
         print("Arquivo de usuários não encontrado.")
  
 
 def findUser(idProcurado):
     try:
-        arq = open("users.json", "r")
-        usuariosRetirados = json.load(arq)
-        for usuario in usuariosRetirados:
-            if usuario["ID"] == idProcurado:
-                # Achou!
-                arq.close()
-                return usuario
-        arq.close()
+        with open("users.json", "r") as arq:
+            usuariosRetirados = json.load(arq)
+            for usuario in usuariosRetirados:
+                if usuario["ID"] == idProcurado:
+                    # Achou!
+                    arq.close()
+                    return usuario
     except FileNotFoundError:
         print("Arquivo de usuário não encontrado.")
         arq.close()
@@ -180,25 +107,21 @@ def addTask():
         #cliente encontrado!
         novoIDT = id_tarefa.updateID()
         try:
-            arq = open("tasks.json", "r")
-            TarefasCadastradas = json.load(arq)
-            arq.close()
+            with open("tasks.json", "r") as arq:
+                TarefasCadastradas = json.load(arq)
         except FileNotFoundError:
-            print("Arquivo de usuários não encontrado.")
-            TarefasCadastradas = []
-        except json.JSONDecodeError:
-            print("Erro no Arquivo.")
+            print("Arquivo de usuarios nao encontrado.")
             TarefasCadastradas = []
 
         TarefasCadastradas.append({
             "ID": novoIDT, 
-            "Título": titulo, 
-            "Descrição": descricao,
+            "Titulo": titulo, 
+            "Descricao": descricao,
             "Status": status,
-            "Tarefa de Usuário": EncontreCliente
+            "Tarefa de Usuario": EncontreCliente
         })
-        arq = open("users.json", "w")
-        json.dump(TarefasCadastradas, arq)
+        arq = open("tasks.json", "w")
+        json.dump(TarefasCadastradas, arq,indent=4)
         arq.close()
 
 def viewTask():
@@ -206,9 +129,7 @@ def viewTask():
         arq = open("tasks.json", "r")
         print("Essas são as tarefas cadastradas: \n")
         TarefasCadastradas = json.load(arq)
-        print(TarefasCadastradas)
+        print(json.dumps(TarefasCadastradas, indent=4))
         arq.close()
     except FileNotFoundError:
         print("Arquivo de tarefas não encontrado.")
-
-menu()
