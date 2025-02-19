@@ -1,23 +1,43 @@
 from sys import exit
 import json
 
+class IDCliente:
+    def __init__(self):
+        self.id = 0
+    def updateID(self):
+        self.id += 1
+        return self.id
+
+class IDTarefa:
+    def __init__(self):
+        self.id = 0
+    def updateID(self):
+        self.id += 1
+        return self.id
+
+id_cliente = IDCliente()
+id_tarefa = IDTarefa()
+
 class User:
-    def __init__(self, id, nome, email):
-        self.id = id
+    def __init__(self, idC, nome, email):
+        self.idC = idC
         self.nome = nome
         self.email = email
+    def __str__(self):
+        return json.dumps({"ID": self.idC, "Nome": self.nome, "Email": self.email})
 
 class Task:
-    def __init__(self, id, titulo, descricao, status, user):
-        self.id = id
+    def __init__(self, idT, titulo, descricao, status, usuario):
+        self.idT = idT
         self.titulo = titulo
         self.descricao = descricao
         self.status = status
-        self.user = user
+        self.usuario = usuario
+    def __str__(self):
+        return json.dumps({"ID": self.idT, "Título": self.titulo, "Descrição": self.descricao, "Status": self.status, "Usuário": self.usuario})
 
 def separarMenu():
-    print("\n" * 5)
-    print("-" * 50)
+    print("\n" * 10)
 
 def menu():
     while True:
@@ -61,6 +81,7 @@ def menu_usuarios():
                 print("Opção inválida, tente novamente.")
         except ValueError:
             print("Digite um valor válido!")
+            
 
 def menu_tarefas():
     while True:
@@ -82,86 +103,112 @@ def menu_tarefas():
         except ValueError:
             print("Digite um valor válido!")
 
-class IDCliente:
-    def __init__(self):
-        self.id = 1
-    def updateID(self):
-        self.id += 1
-        return self.id
-
-id_cliente = IDCliente()
-
-class IDTarefa:
-    def __init__(self):
-        self.id = 1
-    def updateID(self):
-        self.id += 1
-        return self.id
-
-id_tarefa = IDTarefa()
-
 def addUsers():
-    arq = open("usuarios.txt", "a")
     try:
         nome = input("Digite o nome do usuário: ")
         email = input("Digite o email do usuário: ")
     except ValueError:
         print("Digite um valor válido!")
-        menu()
+ 
     
-    NovoUser_id = id_cliente.updateID()
-    arq.write(f"ID: {NovoUser_id} - NOME: {nome} - EMAIL: {email}\n")
-    arq.close()
+    novoIDC = id_cliente.updateID()
 
-def viewUsers():
-    try:
-        arq = open("usuarios.txt", "r")
-        print("Esses são os usuários cadastrados: \n")
-        print(arq.read())
+    try:    
+        arq = open("users.json", "r")
+        usuariosRetirados = json.load(arq)
         arq.close()
     except FileNotFoundError:
         print("Arquivo de usuários não encontrado.")
+        usuariosRetirados = []
+    except json.JSONDecodeError:
+        print("Erro no Arquivo.")
+        usuariosRetirados = []
 
-def findUser(id):
+    usuariosRetirados.append({
+        "ID": novoIDC, 
+        "Nome": nome, 
+        "Email": email
+    })
+    arq = open("users.json", "w")
+    json.dump(usuariosRetirados, arq)
+    arq.close()
+  
+
+def viewUsers():
     try:
-        arq = open("usuarios.txt", "r")
-        for linha in arq:
-            if f"ID: {id}" in linha:
-                # achou o usuario
+        arq = open("users.json", "r")
+        print("Esses são os usuários cadastrados: \n")
+        usuariosRetirados = json.load(arq)
+        print(usuariosRetirados)
+        arq.close()
+    except FileNotFoundError:
+        print("Arquivo de usuários não encontrado.")
+ 
+
+def findUser(idProcurado):
+    try:
+        arq = open("users.json", "r")
+        usuariosRetirados = json.load(arq)
+        for usuario in usuariosRetirados:
+            if usuario["ID"] == idProcurado:
+                # Achou!
                 arq.close()
-                return linha.strip()
+                return usuario
         arq.close()
     except FileNotFoundError:
         print("Arquivo de usuário não encontrado.")
+        arq.close()
         return None
 
 def addTask():
-    arq = open("tarefas.txt", "a")
     try:
         titulo = input("Digite o título da tarefa: ")
         descricao = input("Digite a descrição da tarefa: ")
         status = input("Digite o status da tarefa (Pendente - Em andamento - Concluído): \n")
     except ValueError:
         print("Digite um valor válido!")
-        menu()
+    except FileNotFoundError:
+        print("Arquivo de tarefas não encontrado.")
     
     viewUsers()
-    IDCliente_Procura = int(input("Digite o ID do usuário responsável pela tarefa: ")) 
-    finder = findUser(IDCliente_Procura)
-    if finder == None:
+    id_cliente_procura = int(input("Digite o ID do usuário responsável pela tarefa: ")) 
+    EncontreCliente = findUser(id_cliente_procura)
+    if EncontreCliente == None:
         print("Usuário não encontrado. Tarefa não pode ser criada.")
-        menu()
+  
     else:
-        novoTask_id = id_tarefa.updateID()
-        ClienteEncontrado = finder.split(" - ")[1].split(": ")[1]
-        arq.write(f"Cliente: {ClienteEncontrado} - ID da Tarefa: {novoTask_id} - TÍTULO: {titulo} - DESCRIÇÃO: {descricao} - STATUS: {status}\n")
-    arq.close()
+        #cliente encontrado!
+        novoIDT = id_tarefa.updateID()
+        try:
+            arq = open("tasks.json", "r")
+            TarefasCadastradas = json.load(arq)
+            arq.close()
+        except FileNotFoundError:
+            print("Arquivo de usuários não encontrado.")
+            TarefasCadastradas = []
+        except json.JSONDecodeError:
+            print("Erro no Arquivo.")
+            TarefasCadastradas = []
+
+        TarefasCadastradas.append({
+            "ID": novoIDT, 
+            "Título": titulo, 
+            "Descrição": descricao,
+            "Status": status,
+            "Tarefa de Usuário": EncontreCliente
+        })
+        arq = open("users.json", "w")
+        json.dump(TarefasCadastradas, arq)
+        arq.close()
 
 def viewTask():
     try:
-        arq = open("tarefas.txt", "r")
+        arq = open("tasks.json", "r")
         print("Essas são as tarefas cadastradas: \n")
-        print(arq.read())
+        TarefasCadastradas = json.load(arq)
+        print(TarefasCadastradas)
         arq.close()
     except FileNotFoundError:
         print("Arquivo de tarefas não encontrado.")
+
+menu()
